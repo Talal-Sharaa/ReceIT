@@ -67,7 +67,12 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
   const form = useForm<z.infer<typeof receitSchema>>({
     resolver: zodResolver(receitSchema),
     defaultValues: isEditing
-      ? receit
+      ? {
+        ...receit,
+        // Ensure dates are Date objects
+        startDate: new Date(receit.startDate),
+        dueDate: new Date(receit.dueDate),
+      }
       : {
           title: "",
           description: "",
@@ -83,15 +88,19 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
   React.useEffect(() => {
     if(open) {
       if (receit) {
-        form.reset(receit);
+        form.reset({
+            ...receit,
+            startDate: new Date(receit.startDate),
+            dueDate: new Date(receit.dueDate),
+        });
       } else {
         form.reset({
             id: crypto.randomUUID(),
             title: "",
             description: "",
             priority: "Medium",
-            category: "",
-            effort: 0,
+            category: "Development",
+            effort: 1,
             startDate: new Date(),
             dueDate: new Date(),
             status: "To-Do",
