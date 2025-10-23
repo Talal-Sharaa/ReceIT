@@ -5,7 +5,11 @@ import { ReceitCard } from "./receit-card";
 import { Separator } from "./ui/separator";
 
 export function ReceitList() {
-  const { receits } = useReceits();
+  const { receits, isLoading } = useReceits();
+
+  if (isLoading) {
+    return <p>Loading tasks...</p>;
+  }
 
   const todoReceits = receits.filter(r => r.status === 'To-Do');
   const doneReceits = receits.filter(r => r.status === 'Done');

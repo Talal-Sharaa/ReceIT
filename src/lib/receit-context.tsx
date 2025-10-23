@@ -6,6 +6,7 @@ import { sampleReceits } from './sample-data';
 
 interface ReceitContextType {
   receits: Receit[];
+  isLoading: boolean;
   addReceit: (receit: Receit) => void;
   updateReceit: (receit: Receit) => void;
   deleteReceit: (id: string) => void;
@@ -15,35 +16,34 @@ interface ReceitContextType {
 
 const ReceitContext = createContext<ReceitContextType | undefined>(undefined);
 
-const isServer = typeof window === 'undefined';
-
 export const ReceitProvider = ({ children }: { children: ReactNode }) => {
-  const [receits, setReceits] = useState<Receit[]>(() => {
-    if (isServer) {
-        return sampleReceits;
-    }
+  const [receits, setReceits] = useState<Receit[]>(sampleReceits);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
     try {
       const savedReceits = localStorage.getItem('receits');
       if (savedReceits) {
-        // The object from localStorage needs to have its date strings converted back to Date objects.
         const parsedReceits = JSON.parse(savedReceits);
-        return parsedReceits.map((r: any) => ({
+        setReceits(parsedReceits.map((r: any) => ({
           ...r,
           startDate: new Date(r.startDate),
           dueDate: new Date(r.dueDate),
-        }));
+        })));
       }
     } catch (error) {
       console.error("Failed to parse receits from localStorage", error);
+      // If parsing fails, it might be good to stick with sample data or clear storage
+    } finally {
+        setIsLoading(false);
     }
-    return sampleReceits;
-  });
+  }, []);
 
   useEffect(() => {
-    if (!isServer) {
+    if (!isLoading) {
         localStorage.setItem('receits', JSON.stringify(receits));
     }
-  }, [receits]);
+  }, [receits, isLoading]);
 
   const addReceit = useCallback((receit: Receit) => {
     setReceits(prev => [...prev, receit]);
@@ -63,13 +63,12 @@ export const ReceitProvider = ({ children }: { children: ReactNode }) => {
 
   const categories = React.useMemo(() => {
     const allCategories = new Set(receits.map(r => r.category));
-    // Also include default categories from sample data in case they are all deleted
     sampleReceits.forEach(r => allCategories.add(r.category));
     return [...allCategories];
   }, [receits]);
 
   return (
-    <ReceitContext.Provider value={{ receits, addReceit, updateReceit, deleteReceit, getReceitById, categories }}>
+    <ReceitContext.Provider value={{ receits, isLoading, addReceit, updateReceit, deleteReceit, getReceitById, categories }}>
       {children}
     </ReceitContext.Provider>
   );
