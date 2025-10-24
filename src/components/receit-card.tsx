@@ -58,6 +58,8 @@ export function ReceitCard({ receit }: ReceitCardProps) {
 
   const linkedReceitObjects = receit.linkedReceits.map(id => getReceitById(id)).filter(Boolean) as Receit[];
 
+  const isParent = receit.linkedReceits.length > 0;
+
   return (
     <>
       <TooltipProvider>
@@ -112,7 +114,7 @@ export function ReceitCard({ receit }: ReceitCardProps) {
                     <Trash className="mr-2 h-4 w-4" />
                     <span>Delete</span>
                   </DropdownMenuItem>
-                   {linkedReceitObjects.length > 0 && (
+                   {isParent && (
                     <DropdownMenuItem onClick={handleDeleteWithLinked} className="text-destructive focus:text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       <span>Delete with Linked</span>
