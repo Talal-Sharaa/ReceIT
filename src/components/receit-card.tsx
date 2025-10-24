@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useReceits } from "@/lib/receit-context";
 import type { Receit } from "@/lib/types";
-import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User } from "lucide-react";
+import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User, Trash, Link2Off } from "lucide-react";
 import { format } from 'date-fns';
 import { ReceitForm } from './receit-form';
 import { Separator } from './ui/separator';
@@ -41,6 +41,7 @@ const getPriorityBadgeVariant = (priority: Receit['priority']) => {
 export function ReceitCard({ receit }: ReceitCardProps) {
   const { updateReceit, deleteReceit, getReceitById } = useReceits();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState<string[]>([]);
 
   const handleStatusChange = (checked: boolean) => {
     updateReceit({ ...receit, status: checked ? 'Done' : 'To-Do' });
@@ -50,12 +51,21 @@ export function ReceitCard({ receit }: ReceitCardProps) {
     deleteReceit(receit.id);
   };
   
+  const handleDeleteWithLinked = () => {
+    deleteReceit(receit.id, true);
+  };
+
   const linkedReceitObjects = receit.linkedReceits.map(id => getReceitById(id)).filter(Boolean) as Receit[];
+
+  const isLinked = useReceits().receits.some(r => r.linkedReceits.includes(receit.id));
 
   return (
     <>
       <TooltipProvider>
-        <Card className="flex flex-col h-full font-code shadow-none border-none bg-transparent">
+        <Card 
+          id={`receit-${receit.id}`}
+          className={`flex flex-col h-full font-code shadow-none border-none bg-transparent transition-all duration-300 ${highlighted.includes(receit.id) || isLinked && highlighted.includes(receit.id) ? 'bg-accent/50' : ''}`}
+        >
           <div className="bg-card rounded-t-lg receipt-edge p-6 flex items-start justify-between">
               <div>
                   <CardTitle className="font-code text-2xl mb-2">{receit.title}</CardTitle>
@@ -65,9 +75,15 @@ export function ReceitCard({ receit }: ReceitCardProps) {
               </div>
               <div className="flex items-center gap-2">
                 {linkedReceitObjects.length > 0 && (
-                   <Tooltip>
+                  <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 cursor-default">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 flex-shrink-0"
+                        onMouseEnter={() => setHighlighted(linkedReceitObjects.map(l => l.id))}
+                        onMouseLeave={() => setHighlighted([])}
+                        >
                         <LinkIcon className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </TooltipTrigger>
@@ -92,10 +108,17 @@ export function ReceitCard({ receit }: ReceitCardProps) {
                     <Edit className="mr-2 h-4 w-4" />
                     <span>Edit</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash className="mr-2 h-4 w-4" />
                     <span>Delete</span>
                   </DropdownMenuItem>
+                   {linkedReceitObjects.length > 0 && (
+                    <DropdownMenuItem onClick={handleDeleteWithLinked} className="text-destructive focus:text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Delete with Linked</span>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
                 </DropdownMenu>
               </div>

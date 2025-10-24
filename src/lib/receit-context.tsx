@@ -9,7 +9,7 @@ interface ReceitContextType {
   isLoading: boolean;
   addReceit: (receit: Receit) => void;
   updateReceit: (receit: Receit) => void;
-  deleteReceit: (id: string) => void;
+  deleteReceit: (id: string, withLinked?: boolean) => void;
   getReceitById: (id: string) => Receit | undefined;
   categories: string[];
 }
@@ -17,10 +17,11 @@ interface ReceitContextType {
 const ReceitContext = createContext<ReceitContextType | undefined>(undefined);
 
 export const ReceitProvider = ({ children }: { children: ReactNode }) => {
-  const [receits, setReceits] = useState<Receit[]>(sampleReceits);
+  const [receits, setReceits] = useState<Receit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // This effect runs once on mount to load from localStorage.
     try {
       const savedReceits = localStorage.getItem('receits');
       if (savedReceits) {
@@ -30,16 +31,20 @@ export const ReceitProvider = ({ children }: { children: ReactNode }) => {
           startDate: new Date(r.startDate),
           dueDate: new Date(r.dueDate),
         })));
+      } else {
+        setReceits(sampleReceits); // Load sample data if nothing is in storage
       }
     } catch (error) {
       console.error("Failed to parse receits from localStorage", error);
-      // If parsing fails, it might be good to stick with sample data or clear storage
+      setReceits(sampleReceits); // Fallback to sample data on error
     } finally {
         setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // This effect runs whenever receits change (and not during initial load)
+    // to save to localStorage.
     if (!isLoading) {
         localStorage.setItem('receits', JSON.stringify(receits));
     }
@@ -53,8 +58,23 @@ export const ReceitProvider = ({ children }: { children: ReactNode }) => {
     setReceits(prev => prev.map(r => r.id === updatedReceit.id ? updatedReceit : r));
   }, []);
 
-  const deleteReceit = useCallback((id: string) => {
-    setReceits(prev => prev.filter(r => r.id !== id && !r.linkedReceits.includes(id)));
+  const deleteReceit = useCallback((id: string, withLinked: boolean = false) => {
+    setReceits(prev => {
+      const receitToDelete = prev.find(r => r.id === id);
+      if (!receitToDelete) return prev;
+
+      let idsToDelete = [id];
+      if (withLinked) {
+        idsToDelete = [...idsToDelete, ...receitToDelete.linkedReceits];
+      }
+      
+      // Also remove the deleted receit from any other receit's linkedReceits array
+      return prev.filter(r => !idsToDelete.includes(r.id))
+                 .map(r => ({
+                    ...r,
+                    linkedReceits: r.linkedReceits.filter(linkedId => !idsToDelete.includes(linkedId))
+                 }));
+    });
   }, []);
   
   const getReceitById = useCallback((id: string) => {
