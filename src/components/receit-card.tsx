@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState } from 'react';
@@ -22,6 +23,7 @@ import {
 
 type ReceitCardProps = {
   receit: Receit;
+  isParent: boolean;
 };
 
 const categoryIcons: { [key: string]: React.ReactNode } = {
@@ -39,7 +41,7 @@ const getPriorityBadgeVariant = (priority: Receit['priority']) => {
   }
 };
 
-export function ReceitCard({ receit }: ReceitCardProps) {
+export function ReceitCard({ receit, isParent }: ReceitCardProps) {
   const { updateReceit, deleteReceit, getReceitById } = useReceits();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [highlighted, setHighlighted] = useState<string[]>([]);
@@ -57,8 +59,6 @@ export function ReceitCard({ receit }: ReceitCardProps) {
   };
 
   const linkedReceitObjects = receit.linkedReceits.map(id => getReceitById(id)).filter(Boolean) as Receit[];
-
-  const isParent = receit.linkedReceits.length > 0;
 
   return (
     <>

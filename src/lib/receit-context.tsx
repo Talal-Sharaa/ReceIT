@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
@@ -60,12 +61,12 @@ export const ReceitProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteReceit = useCallback((id: string, withLinked: boolean = false) => {
     setReceits(prev => {
-      const receitToDelete = prev.find(r => r.id === id);
-      if (!receitToDelete) return prev;
-
       let idsToDelete = [id];
+      
       if (withLinked) {
-        idsToDelete = [...idsToDelete, ...receitToDelete.linkedReceits];
+        // Find all children of the parent task
+        const childrenIds = prev.filter(r => r.linkedReceits.includes(id)).map(r => r.id);
+        idsToDelete = [...idsToDelete, ...childrenIds];
       }
       
       // Also remove the deleted receit from any other receit's linkedReceits array

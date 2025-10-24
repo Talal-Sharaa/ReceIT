@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useReceits } from "@/lib/receit-context";
@@ -10,6 +11,8 @@ export function ReceitList() {
   if (isLoading) {
     return <p>Loading tasks...</p>;
   }
+  
+  const parentReceitIds = new Set(receits.flatMap(r => r.linkedReceits));
 
   const todoReceits = receits.filter(r => r.status === 'To-Do');
   const doneReceits = receits.filter(r => r.status === 'Done');
@@ -21,7 +24,7 @@ export function ReceitList() {
         {todoReceits.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2">
             {todoReceits.map((receit) => (
-              <ReceitCard key={receit.id} receit={receit} />
+              <ReceitCard key={receit.id} receit={receit} isParent={parentReceitIds.has(receit.id)} />
             ))}
           </div>
         ) : (
@@ -36,7 +39,7 @@ export function ReceitList() {
         {doneReceits.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2">
             {doneReceits.map((receit) => (
-              <ReceitCard key={receit.id} receit={receit} />
+              <ReceitCard key={receit.id} receit={receit} isParent={parentReceitIds.has(receit.id)} />
             ))}
           </div>
         ) : (
