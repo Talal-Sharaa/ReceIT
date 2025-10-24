@@ -52,6 +52,7 @@ import { receitSchema } from "@/lib/schemas";
 import { useReceits } from "@/lib/receit-context";
 import { priorities, type Receit } from "@/lib/types";
 import React from "react";
+import { Badge } from "./ui/badge";
 
 type ReceitFormProps = {
   open: boolean;
@@ -250,7 +251,7 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
                 <FormItem>
                   <FormLabel>Effort (Points)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="e.g., 5" {...field} />
+                    <Input type="number" placeholder="e.g., 5" {...field} onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -328,10 +329,10 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
                                     className="w-full justify-between h-auto min-h-10"
                                 >
                                     <div className="flex flex-wrap gap-1">
-                                    {field.value.length > 0 ? (
+                                    {field.value && field.value.length > 0 ? (
                                         field.value.map(id => {
                                             const receit = otherReceits.find(r => r.id === id);
-                                            return receit ? <span key={id} className="bg-muted text-muted-foreground text-xs font-medium px-2 py-1 rounded-sm">{receit.title}</span> : null;
+                                            return receit ? <Badge key={id} variant="secondary" className="font-normal">{receit.title}</Badge> : null;
                                         })
                                     ) : (
                                         <span className="text-muted-foreground font-normal">Select ReceITs to link</span>
