@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -8,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useReceits } from "@/lib/receit-context";
 import type { Receit } from "@/lib/types";
-import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User, Trash, Link2Off } from "lucide-react";
+import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User, Trash } from "lucide-react";
 import { format } from 'date-fns';
 import { ReceitForm } from './receit-form';
 import { Separator } from './ui/separator';
@@ -57,14 +58,12 @@ export function ReceitCard({ receit }: ReceitCardProps) {
 
   const linkedReceitObjects = receit.linkedReceits.map(id => getReceitById(id)).filter(Boolean) as Receit[];
 
-  const isLinked = useReceits().receits.some(r => r.linkedReceits.includes(receit.id));
-
   return (
     <>
       <TooltipProvider>
         <Card 
           id={`receit-${receit.id}`}
-          className={`flex flex-col h-full font-code shadow-none border-none bg-transparent transition-all duration-300 ${highlighted.includes(receit.id) || isLinked && highlighted.includes(receit.id) ? 'bg-accent/50' : ''}`}
+          className={`flex flex-col h-full font-code shadow-none border-none bg-transparent transition-all duration-300 ${highlighted.includes(receit.id) ? 'bg-accent/50' : ''}`}
         >
           <div className="bg-card rounded-t-lg receipt-edge p-6 flex items-start justify-between">
               <div>
