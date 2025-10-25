@@ -6,6 +6,9 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 export const metadata: Metadata = {
   title: 'ReceIT Task Manager',
   description: 'Re-imagining task management',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
