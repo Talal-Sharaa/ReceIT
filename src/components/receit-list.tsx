@@ -1,12 +1,14 @@
 
 "use client";
 
+import React from "react";
 import { useReceits } from "@/lib/receit-context";
 import { ReceitCard } from "./receit-card";
 import { Separator } from "./ui/separator";
 
 export function ReceitList() {
   const { receits, isLoading } = useReceits();
+  const [highlighted, setHighlighted] = React.useState<string[]>([]);
 
   if (isLoading) {
     return <p>Loading tasks...</p>;
@@ -24,7 +26,13 @@ export function ReceitList() {
         {todoReceits.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2">
             {todoReceits.map((receit) => (
-              <ReceitCard key={receit.id} receit={receit} isParent={parentReceitIds.has(receit.id)} />
+              <ReceitCard 
+                key={receit.id} 
+                receit={receit} 
+                isParent={parentReceitIds.has(receit.id)}
+                highlighted={highlighted}
+                setHighlighted={setHighlighted}
+              />
             ))}
           </div>
         ) : (
@@ -39,7 +47,13 @@ export function ReceitList() {
         {doneReceits.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2">
             {doneReceits.map((receit) => (
-              <ReceitCard key={receit.id} receit={receit} isParent={parentReceitIds.has(receit.id)} />
+              <ReceitCard 
+                key={receit.id} 
+                receit={receit} 
+                isParent={parentReceitIds.has(receit.id)}
+                highlighted={highlighted}
+                setHighlighted={setHighlighted}
+              />
             ))}
           </div>
         ) : (

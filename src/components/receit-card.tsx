@@ -1,16 +1,15 @@
-
-
 "use client";
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useReceits } from "@/lib/receit-context";
 import type { Receit } from "@/lib/types";
-import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User, Trash } from "lucide-react";
+import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User, Trash, MessageSquarePlus } from "lucide-react";
 import { format } from 'date-fns';
 import { ReceitForm } from './receit-form';
 import { Separator } from './ui/separator';
@@ -24,6 +23,8 @@ import {
 type ReceitCardProps = {
   receit: Receit;
   isParent: boolean;
+  highlighted: string[];
+  setHighlighted: (ids: string[]) => void;
 };
 
 const categoryIcons: { [key: string]: React.ReactNode } = {
@@ -41,10 +42,10 @@ const getPriorityBadgeVariant = (priority: Receit['priority']) => {
   }
 };
 
-export function ReceitCard({ receit, isParent }: ReceitCardProps) {
+export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: ReceitCardProps) {
   const { updateReceit, deleteReceit, getReceitById } = useReceits();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [highlighted, setHighlighted] = useState<string[]>([]);
+  const [newNote, setNewNote] = useState('');
 
   const handleStatusChange = (checked: boolean) => {
     updateReceit({ ...receit, status: checked ? 'Done' : 'To-Do' });
@@ -58,6 +59,14 @@ export function ReceitCard({ receit, isParent }: ReceitCardProps) {
     deleteReceit(receit.id, true);
   };
 
+  const handleAddNote = () => {
+    if (newNote.trim()) {
+      const updatedNotes = [...(receit.notes || []), newNote.trim()];
+      updateReceit({ ...receit, notes: updatedNotes });
+      setNewNote('');
+    }
+  };
+
   const linkedReceitObjects = receit.linkedReceits.map(id => getReceitById(id)).filter(Boolean) as Receit[];
 
   return (
@@ -65,7 +74,7 @@ export function ReceitCard({ receit, isParent }: ReceitCardProps) {
       <TooltipProvider>
         <Card 
           id={`receit-${receit.id}`}
-          className={`flex flex-col h-full font-code shadow-none border-none bg-transparent transition-all duration-300 ${highlighted.includes(receit.id) ? 'bg-accent/50' : ''}`}
+          className={`flex flex-col h-full font-code shadow-none border-none bg-transparent transition-all duration-300 ${highlighted.includes(receit.id) ? 'bg-accent/50 ring-2 ring-primary' : ''}`}
         >
           <div className="bg-card rounded-t-lg receipt-edge p-6 flex items-start justify-between">
               <div>
@@ -137,6 +146,34 @@ export function ReceitCard({ receit, isParent }: ReceitCardProps) {
                       <span>{receit.effort} pts</span>
                   </div>
               </div>
+          </div>
+          <Separator className="border-dashed border-2" />
+          <div className="bg-card receipt-edge p-6 space-y-4">
+            <h4 className="text-sm font-semibold">Notes</h4>
+            <div className="space-y-2">
+              {receit.notes && receit.notes.length > 0 ? (
+                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                  {receit.notes.map((note, index) => (
+                    <li key={index}>{note}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-muted-foreground">No notes yet.</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Input 
+                type="text" 
+                placeholder="Add a note..." 
+                value={newNote} 
+                onChange={(e) => setNewNote(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
+                className="h-8 text-xs"
+              />
+              <Button size="icon" className="h-8 w-8 flex-shrink-0" onClick={handleAddNote}>
+                <MessageSquarePlus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <Separator className="border-dashed border-2" />
           <div className="bg-card rounded-b-lg receipt-edge p-6 flex justify-between w-full items-center">

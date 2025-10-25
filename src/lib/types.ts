@@ -18,11 +18,10 @@ export const receitSchema = z.object({
   dueDate: z.date(),
   status: z.enum(statuses).default('To-Do'),
   linkedReceits: z.array(z.string()).default([]),
+  notes: z.array(z.string()).default([]),
 }).refine(data => data.dueDate >= data.startDate, {
   message: "Due date cannot be earlier than start date.",
   path: ["dueDate"],
 });
 
 export type Receit = z.infer<typeof receitSchema>;
-
-    

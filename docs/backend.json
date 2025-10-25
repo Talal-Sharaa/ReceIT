@@ -73,6 +73,13 @@
             "type": "string"
           }
         },
+        "notes": {
+            "type": "array",
+            "description": "A list of notes for the Receit.",
+            "items": {
+                "type": "string"
+            }
+        },
         "status": {
           "type": "string",
           "enum": ["To-Do", "Done"]
