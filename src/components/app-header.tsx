@@ -21,7 +21,7 @@ export function AppHeader() {
     <>
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
         <div className="flex items-center gap-3">
-          <ReceitLogo className="h-10 w-10 text-primary mb-1" />
+          <ReceitLogo className="h-10 w-10 text-primary mb-3" />
           <h1 className="font-headline text-2xl font-semibold text-foreground">
             ReceIT
           </h1>
