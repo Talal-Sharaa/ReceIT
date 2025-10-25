@@ -32,10 +32,6 @@
       "type": "object",
       "description": "Represents a task or 'ReceIT' in the application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ReceIT entity."
-        },
         "userId": {
           "type": "string",
           "description": "Reference to User. (Relationship: User 1:N Receit)"
@@ -56,7 +52,7 @@
           "type": "string",
           "description": "Category to which the ReceIT belongs (e.g., Marketing, Development, Personal)."
         },
-        "estimatedPoints": {
+        "effort": {
           "type": "number",
           "description": "Estimated effort points required for the ReceIT."
         },
@@ -70,77 +66,43 @@
           "description": "Due date of the ReceIT.",
           "format": "date-time"
         },
-        "dependentReceitIds": {
+        "linkedReceits": {
           "type": "array",
           "description": "References to other Receits that this Receit depends on. (Relationship: Receit N:N Receit)",
           "items": {
             "type": "string"
           }
         },
-        "completed": {
-          "type": "boolean",
-          "description": "Indicates whether the ReceIT is completed or not."
+        "status": {
+          "type": "string",
+          "enum": ["To-Do", "Done"]
         }
       },
       "required": [
-        "id",
         "userId",
         "title",
-        "description",
         "priority",
         "category",
-        "estimatedPoints",
+        "effort",
         "startDate",
         "dueDate",
-        "completed"
+        "status"
       ]
     }
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information. The 'userId' is the Firebase Authentication UID, ensuring secure identification and access control. The id field on the User document will match the {userId} path parameter.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
-            }
-          ]
-        }
+      "/users/{userId}": {
+        "schema": { "$ref": "#/entities/User" },
+        "description": "Stores user profile information."
       },
-      {
-        "path": "/users/{userId}/receits/{receitId}",
-        "definition": {
-          "entityName": "Receit",
-          "schema": {
-            "$ref": "#/backend/entities/Receit"
-          },
-          "description": "Stores Receit data associated with a specific user.  Path-based ownership ensures that only the user with the matching 'userId' can access the Receit. The userId on the Receit document will match the {userId} path parameter.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user who owns the Receit."
-            },
-            {
-              "name": "receitId",
-              "description": "The unique identifier for the Receit document."
-            }
-          ]
-        }
+      "/users/{userId}/receits/{receitId}": {
+        "schema": { "$ref": "#/entities/Receit" },
+        "description": "Stores Receit data associated with a specific user."
       }
-    ],
-    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, support QAPs (Queries are not Filters), and maintain data clarity.  It leverages path-based ownership for user-specific data. Receit documents are stored within user-specific collections to facilitate easy querying and access control. User data is stored at the root level for global access, while Receit data is namespaced under the user for clear ownership. This approach ensures atomic operations, simplifies security rules, and makes debugging straightforward.  The structure also implicitly supports list operations restricted to the logged-in user's Receit documents via the path-based ownership."
   }
 }

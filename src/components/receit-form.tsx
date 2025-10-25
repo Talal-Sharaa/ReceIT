@@ -1,8 +1,9 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -48,9 +49,8 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { receitSchema } from "@/lib/schemas";
 import { useReceits } from "@/lib/receit-context";
-import { priorities, type Receit } from "@/lib/types";
+import { priorities, type Receit, receitSchema } from "@/lib/types";
 import React from "react";
 import { Badge } from "./ui/badge";
 
@@ -60,19 +60,22 @@ type ReceitFormProps = {
   receit?: Receit;
 };
 
+
 export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
   const { addReceit, updateReceit, receits, categories } = useReceits();
   const { toast } = useToast();
   const isEditing = !!receit;
 
-  const form = useForm<z.infer<typeof receitSchema>>({
-    resolver: zodResolver(receitSchema),
+  // Create a version of the schema for the form that doesn't require the ID.
+  const formSchema = receitSchema.omit({ id: true, status: true, userId: true });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: isEditing
       ? {
         ...receit,
-        // Ensure dates are Date objects
-        startDate: new Date(receit.startDate),
-        dueDate: new Date(receit.dueDate),
+        startDate: receit.startDate ? new Date(receit.startDate) : new Date(),
+        dueDate: receit.dueDate ? new Date(receit.dueDate) : new Date(),
       }
       : {
           title: "",
@@ -96,7 +99,6 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
         });
       } else {
         form.reset({
-            id: crypto.randomUUID(),
             title: "",
             description: "",
             priority: "Medium",
@@ -104,7 +106,6 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
             effort: 1,
             startDate: new Date(),
             dueDate: new Date(),
-            status: "To-Do",
             linkedReceits: [],
           });
       }
@@ -112,10 +113,10 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
   }, [receit, form, open]);
 
 
-  function onSubmit(data: z.infer<typeof receitSchema>) {
+  function onSubmit(data: z.infer<typeof formSchema>) {
     try {
-      if (isEditing) {
-        updateReceit(data);
+      if (isEditing && receit) {
+        updateReceit({ ...receit, ...data });
         toast({ title: "ReceIT Updated", description: `"${data.title}" has been updated.` });
       } else {
         addReceit(data);
@@ -123,6 +124,7 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
       }
       onOpenChange(false);
     } catch (error) {
+      console.error("Form submission error:", error);
       toast({
         variant: "destructive",
         title: "Something went wrong",
@@ -384,3 +386,5 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
     </Sheet>
   );
 }
+
+    

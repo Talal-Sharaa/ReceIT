@@ -2,11 +2,17 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Receipt } from 'lucide-react';
+import { Plus, Receipt, LogOut } from 'lucide-react';
 import { ReceitForm } from './receit-form';
+import { useAuth } from '@/firebase';
 
 export function AppHeader() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const auth = useAuth();
+
+  const handleSignOut = () => {
+    auth.signOut();
+  };
 
   return (
     <>
@@ -17,10 +23,16 @@ export function AppHeader() {
             ReceIT
           </h1>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New ReceIT
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New ReceIT
+          </Button>
+          <Button variant="outline" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
       </header>
       <ReceitForm open={isFormOpen} onOpenChange={setIsFormOpen} />
     </>
