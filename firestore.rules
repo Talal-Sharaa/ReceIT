@@ -1,26 +1,18 @@
 /**
- * @fileoverview Firestore Security Rules for ReceIT application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model.  Each user can only
- * access their own user document and the Receit documents nested under their
- * user ID. This ensures that users cannot read, modify, or delete data belonging
- * to other users.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for the ReceIT application.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profile data, where {userId} is the Firebase Auth UID.
- * - /users/{userId}/receits/{receitId}: Stores Receit data for a specific user.
+ * - /users/{userId}: Stores user profile information, accessible only to the user themselves.
+ * - /users/{userId}/receits/{receitId}: Stores ReceIT (task) data, accessible only to the owner.
  *
  * Key Security Decisions:
- * - Users can only create their own user document if the ID matches their auth UID.
- * - Users can only read, write, or delete Receits under their own user ID.
- * - Data validation is minimal in this prototyping phase. Only relationship-critical
- *   fields (e.g., userId) are validated to ensure data integrity.
+ * - Users can only access their own user document and their own ReceITs.
+ * - Admin users are not granted any special access; they are treated as regular users.
+ * - Listing of users is not allowed.
  *
  * Denormalization for Authorization:
- *  - Receit documents have a `userId` field that MUST match the parent `userId` in
- *    the path `/users/{userId}/receits/{receitId}`. This denormalization allows
- *    for simple and performant ownership checks without requiring additional reads.
+ * - Receit documents are required to have a `userId` field that matches the parent user document's ID. This ensures data consistency and allows for efficient ownership checks.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -29,76 +21,63 @@ service cloud.firestore {
     /**
      * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) - User with UID 'user_abc' can create their own profile.
-     * @allow (get) - User with UID 'user_abc' can read their own profile.
-     * @allow (update) - User with UID 'user_abc' can update their own profile.
-     * @allow (delete) - User with UID 'user_abc' can delete their own profile.
-     * @deny (create) - User with UID 'user_xyz' cannot create a profile for 'user_abc'.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User with ID 'user123' creates their profile.
+     *   - auth.uid: 'user123'
+     *   - request.resource.data.id: 'user123'
+     * @allow (get) User with ID 'user123' reads their profile.
+     *   - auth.uid: 'user123'
+     * @allow (update) User with ID 'user123' updates their profile.
+     *   - auth.uid: 'user123'
+     * @allow (delete) User with ID 'user123' deletes their profile.
+     *   - auth.uid: 'user123'
+     * @deny (create) User with ID 'user123' tries to create a profile for 'user456'.
+     *   - auth.uid: 'user123'
+     *   - request.resource.data.id: 'user456'
+     * @deny (get) User with ID 'user123' tries to read profile of 'user456'.
+     *   - auth.uid: 'user123'
+     * @principle Enforces document ownership for all operations on user profiles.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
-      // Allow the user to create their own document, enforcing that the ID matches their auth UID.
-      allow create: if isSignedIn() && isOwner(userId)
-                      && request.resource.data.id == userId;
-
-      // Allow the user to read their own document.
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow the user to update their own document, ensuring the ID is immutable.
-      allow update: if isSignedIn() && isOwner(userId)
-                       && request.resource.data.id == resource.data.id;
-
-      // Allow the user to delete their own document.
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-
-      //Do not allow listing of users
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow get: if isOwner(userId);
+      allow update: if isOwner(userId) && resource.data.id == userId;
+      allow delete: if isOwner(userId) && resource != null;
       allow list: if false;
     }
 
     /**
-     * @description Controls access to Receit documents nested under a user.
+     * @description Controls access to ReceIT documents within a user's collection.
      * @path /users/{userId}/receits/{receitId}
-     * @allow (create) - User with UID 'user_abc' can create a Receit under their ID.
-     * @allow (get) - User with UID 'user_abc' can read a Receit under their ID.
-     * @allow (update) - User with UID 'user_abc' can update a Receit under their ID.
-     * @allow (delete) - User with UID 'user_abc' can delete a Receit under their ID.
-     * @deny (create) - User with UID 'user_xyz' cannot create a Receit under 'user_abc'.
-     * @principle Enforces document ownership for writes; allows owner-only reads.
+     * @allow (create) User 'user123' creates a ReceIT in their collection.
+     *   - auth.uid: 'user123'
+     *   - request.resource.data.userId: 'user123'
+     * @allow (get) User 'user123' reads a ReceIT in their collection.
+     *   - auth.uid: 'user123'
+     * @allow (update) User 'user123' updates a ReceIT in their collection.
+     *   - auth.uid: 'user123'
+     * @allow (delete) User 'user123' deletes a ReceIT in their collection.
+     *   - auth.uid: 'user123'
+     * @deny (create) User 'user123' tries to create a ReceIT for 'user456'.
+     *   - auth.uid: 'user123'
+     *   - request.resource.data.userId: 'user456'
+     * @deny (get) User 'user123' tries to read a ReceIT from user 'user456'.
+     *   - auth.uid: 'user123'
+     * @principle Enforces document ownership for all operations on ReceITs, ensuring users can only manage their own tasks.
      */
     match /users/{userId}/receits/{receitId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
-      // Allow the user to create a receit document, enforcing that userId matches the path.
-      allow create: if isSignedIn() && isOwner(userId)
-                      && request.resource.data.userId == userId;
-
-      // Allow the user to read their own receit document.
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow the user to list receit documents if they are the owner
-      allow list: if isSignedIn() && isOwner(userId);
-
-      // Allow the user to update their own receit document, ensuring the userId is immutable.
-      allow update: if isSignedIn() && isOwner(userId)
-                       && resource != null // Ensure document exists
-                       && request.resource.data.userId == resource.data.userId;
-
-      // Allow the user to delete their own receit document.
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow get: if isOwner(userId);
+      allow update: if isOwner(userId) && resource != null && resource.data.userId == userId;
+      allow delete: if isOwner(userId) && resource != null && resource.data.userId == userId;
+      allow list: if isOwner(userId);
     }
   }
 }
