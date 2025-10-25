@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   initiateEmailSignUp,
   initiateEmailSignIn,
+  initiateGoogleSignIn,
   useAuth,
   useUser,
 } from "@/firebase";
@@ -32,6 +33,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -90,6 +92,16 @@ export default function LoginPage() {
     }
   };
   
+  const handleGoogleSignIn = async () => {
+    setFirebaseError(null);
+    try {
+      await initiateGoogleSignIn(auth);
+    } catch (error: any) {
+      console.error("Google Sign-in failed:", error);
+      setFirebaseError(error.message || "An unexpected error occurred during Google Sign-in.");
+    }
+  };
+  
   if (isUserLoading || user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -114,6 +126,19 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+                Sign in with Google
+              </Button>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                    </span>
+                </div>
+              </div>
               <Form {...loginForm}>
                 <form
                   onSubmit={loginForm.handleSubmit(handleLogin)}
@@ -166,6 +191,19 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+               <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+                Sign up with Google
+              </Button>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                    </span>
+                </div>
+              </div>
               <Form {...signUpForm}>
                 <form
                   onSubmit={signUpForm.handleSubmit(handleSignUp)}
