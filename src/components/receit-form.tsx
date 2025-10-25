@@ -60,23 +60,26 @@ type ReceitFormProps = {
   receit?: Receit;
 };
 
+// Define a new schema specifically for the form validation
+const formSchema = z.object({
+    title: z.string().min(3, { message: "Title must be at least 3 characters." }),
+    description: z.string().min(3, { message: "Description must be at least 3 characters." }).optional().or(z.literal('')),
+    priority: z.enum(priorities),
+    category: z.string().min(1, { message: "Category is required." }),
+    effort: z.coerce.number().min(0, { message: "Effort must be a positive number." }),
+    startDate: z.date(),
+    dueDate: z.date(),
+    linkedReceits: z.array(z.string()).default([]),
+}).refine(data => data.dueDate >= data.startDate, {
+  message: "Due date cannot be earlier than start date.",
+  path: ["dueDate"],
+});
+
 
 export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
   const { addReceit, updateReceit, receits, categories } = useReceits();
   const { toast } = useToast();
   const isEditing = !!receit;
-
-  // Create a version of the schema for the form that doesn't require server-generated fields.
-  const formSchema = receitSchema.pick({
-      title: true,
-      description: true,
-      priority: true,
-      category: true,
-      effort: true,
-      startDate: true,
-      dueDate: true,
-      linkedReceits: true,
-  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
