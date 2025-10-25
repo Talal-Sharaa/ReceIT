@@ -4,12 +4,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useReceits } from "@/lib/receit-context";
 import type { Receit } from "@/lib/types";
-import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User, Trash, MessageSquarePlus } from "lucide-react";
+import { Briefcase, Calendar, Edit, Hash, Link as LinkIcon, Megaphone, MoreVertical, Trash2, User, Trash, MessageSquarePlus, NotepadText } from "lucide-react";
 import { format } from 'date-fns';
 import { ReceitForm } from './receit-form';
 import { Separator } from './ui/separator';
@@ -19,6 +18,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 type ReceitCardProps = {
   receit: Receit;
@@ -42,10 +50,62 @@ const getPriorityBadgeVariant = (priority: Receit['priority']) => {
   }
 };
 
+function NotesDialog({ receit, open, onOpenChange }: { receit: Receit; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { updateReceit } = useReceits();
+  const [newNote, setNewNote] = useState('');
+
+  const handleAddNote = () => {
+    if (newNote.trim()) {
+      const updatedNotes = [...(receit.notes || []), newNote.trim()];
+      updateReceit({ ...receit, notes: updatedNotes });
+      setNewNote('');
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><NotepadText className="h-5 w-5" />Notes for: {receit.title}</DialogTitle>
+          <DialogDescription>
+            View and add notes for this ReceIT.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-4">
+              {receit.notes && receit.notes.length > 0 ? (
+                <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-2">
+                  {receit.notes.map((note, index) => (
+                    <li key={index}>{note}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No notes yet.</p>
+              )}
+            </div>
+            <div className="flex gap-2 items-center">
+              <Input 
+                id="note" 
+                placeholder="Add a new note..."
+                value={newNote} 
+                onChange={(e) => setNewNote(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
+              />
+              <Button size="icon" className="h-9 w-9 flex-shrink-0" onClick={handleAddNote}>
+                <MessageSquarePlus className="h-4 w-4" />
+              </Button>
+            </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: ReceitCardProps) {
   const { updateReceit, deleteReceit, getReceitById } = useReceits();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [newNote, setNewNote] = useState('');
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
 
   const handleStatusChange = (checked: boolean) => {
     updateReceit({ ...receit, status: checked ? 'Done' : 'To-Do' });
@@ -59,14 +119,6 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
     deleteReceit(receit.id, true);
   };
 
-  const handleAddNote = () => {
-    if (newNote.trim()) {
-      const updatedNotes = [...(receit.notes || []), newNote.trim()];
-      updateReceit({ ...receit, notes: updatedNotes });
-      setNewNote('');
-    }
-  };
-
   const linkedReceitObjects = receit.linkedReceits.map(id => getReceitById(id)).filter(Boolean) as Receit[];
 
   return (
@@ -76,14 +128,14 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
           id={`receit-${receit.id}`}
           className={`flex flex-col h-full font-code shadow-none border-none bg-transparent transition-all duration-300 ${highlighted.includes(receit.id) ? 'bg-accent/50 ring-2 ring-primary' : ''}`}
         >
-          <div className="bg-card rounded-t-lg receipt-edge p-6 flex items-start justify-between">
+          <div className="bg-card rounded-t-lg receipt-edge p-6 flex items-start justify-between cursor-pointer" onClick={() => setIsNotesOpen(true)}>
               <div>
                   <CardTitle className="font-code text-2xl mb-2">{receit.title}</CardTitle>
                   <CardDescription className="text-xs">
                       ID: {receit.id.substring(0,8)}
                   </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 {linkedReceitObjects.length > 0 && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -133,7 +185,7 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
                 </DropdownMenu>
               </div>
           </div>
-          <div className="bg-card receipt-edge px-6 py-4 space-y-4">
+          <div className="bg-card receipt-edge px-6 py-4 space-y-4 cursor-pointer" onClick={() => setIsNotesOpen(true)}>
               <p className="text-sm text-foreground min-h-[40px]">{receit.description}</p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
                   <Badge variant={getPriorityBadgeVariant(receit.priority)}>{receit.priority} Priority</Badge>
@@ -146,34 +198,6 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
                       <span>{receit.effort} pts</span>
                   </div>
               </div>
-          </div>
-          <Separator className="border-dashed border-2" />
-          <div className="bg-card receipt-edge p-6 space-y-4">
-            <h4 className="text-sm font-semibold">Notes</h4>
-            <div className="space-y-2">
-              {receit.notes && receit.notes.length > 0 ? (
-                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-                  {receit.notes.map((note, index) => (
-                    <li key={index}>{note}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-xs text-muted-foreground">No notes yet.</p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Input 
-                type="text" 
-                placeholder="Add a note..." 
-                value={newNote} 
-                onChange={(e) => setNewNote(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
-                className="h-8 text-xs"
-              />
-              <Button size="icon" className="h-8 w-8 flex-shrink-0" onClick={handleAddNote}>
-                <MessageSquarePlus className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
           <Separator className="border-dashed border-2" />
           <div className="bg-card rounded-b-lg receipt-edge p-6 flex justify-between w-full items-center">
@@ -193,6 +217,7 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
           </div>
         </Card>
       </TooltipProvider>
+      {isNotesOpen && <NotesDialog receit={receit} open={isNotesOpen} onOpenChange={setIsNotesOpen} />}
       {isFormOpen && <ReceitForm open={isFormOpen} onOpenChange={setIsFormOpen} receit={receit} />}
     </>
   );
