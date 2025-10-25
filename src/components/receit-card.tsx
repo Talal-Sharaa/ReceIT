@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -68,21 +69,10 @@ function NotesDialog({ receit, open, onOpenChange }: { receit: Receit; open: boo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><NotepadText className="h-5 w-5" />Notes for: {receit.title}</DialogTitle>
           <DialogDescription>
-            View and add notes for this ReceIT.
+            Add a new note for this ReceIT.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-4">
-              {receit.notes && receit.notes.length > 0 ? (
-                <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-2">
-                  {receit.notes.map((note, index) => (
-                    <li key={index}>{note}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">No notes yet.</p>
-              )}
-            </div>
             <div className="flex gap-2 items-center">
               <Input 
                 id="note" 
@@ -128,7 +118,7 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
           id={`receit-${receit.id}`}
           className={`flex flex-col h-full font-code shadow-none border-none bg-transparent transition-all duration-300 ${highlighted.includes(receit.id) ? 'bg-accent/50 ring-2 ring-primary' : ''}`}
         >
-          <div className="bg-card rounded-t-lg receipt-edge p-6 flex items-start justify-between cursor-pointer" onClick={() => setIsNotesOpen(true)}>
+          <div className="bg-card rounded-t-lg receipt-edge p-6 flex items-start justify-between">
               <div>
                   <CardTitle className="font-code text-2xl mb-2">{receit.title}</CardTitle>
                   <CardDescription className="text-xs">
@@ -159,6 +149,9 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
                     </TooltipContent>
                   </Tooltip>
                 )}
+                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsNotesOpen(true)}>
+                    <MessageSquarePlus className="h-4 w-4" />
+                </Button>
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
@@ -185,8 +178,18 @@ export function ReceitCard({ receit, isParent, highlighted, setHighlighted }: Re
                 </DropdownMenu>
               </div>
           </div>
-          <div className="bg-card receipt-edge px-6 py-4 space-y-4 cursor-pointer" onClick={() => setIsNotesOpen(true)}>
+          <div className="bg-card receipt-edge px-6 py-4 space-y-4">
               <p className="text-sm text-foreground min-h-[40px]">{receit.description}</p>
+              {receit.notes && receit.notes.length > 0 && (
+                <div className="pt-2">
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1.5"><NotepadText className="h-3.5 w-3.5" /> Notes</h4>
+                    <div className="text-sm text-muted-foreground list-disc pl-5 space-y-2 max-h-24 overflow-y-auto">
+                        {receit.notes.map((note, index) => (
+                            <div key={index} className="text-xs border-l-2 pl-3 border-border">{note}</div>
+                        ))}
+                    </div>
+                </div>
+              )}
               <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
                   <Badge variant={getPriorityBadgeVariant(receit.priority)}>{receit.priority} Priority</Badge>
                   <div className="flex items-center gap-1">
