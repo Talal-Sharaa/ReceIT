@@ -66,8 +66,17 @@ export function ReceitForm({ open, onOpenChange, receit }: ReceitFormProps) {
   const { toast } = useToast();
   const isEditing = !!receit;
 
-  // Create a version of the schema for the form that doesn't require the ID.
-  const formSchema = receitSchema.omit({ id: true, status: true, userId: true });
+  // Create a version of the schema for the form that doesn't require server-generated fields.
+  const formSchema = receitSchema.pick({
+      title: true,
+      description: true,
+      priority: true,
+      category: true,
+      effort: true,
+      startDate: true,
+      dueDate: true,
+      linkedReceits: true,
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
